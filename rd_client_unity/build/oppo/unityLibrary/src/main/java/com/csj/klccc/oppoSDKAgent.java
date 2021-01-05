@@ -1,35 +1,37 @@
 package com.csj.klccc;
 
 import android.app.Activity;
+import android.content.Context;
+import android.graphics.Point;
+import android.support.annotation.Dimension;
 import android.util.Log;
-import android.view.KeyEvent;
+import android.view.Display;
+import android.view.Gravity;
 import android.view.View;
+import android.view.ViewGroup;
+import android.view.WindowManager;
 import android.widget.FrameLayout;
+import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
 
-import com.heytap.instant.upgrade.util.Constants;
 import com.heytap.msp.mobad.api.InitParams;
 import com.heytap.msp.mobad.api.MobAdManager;
 import com.heytap.msp.mobad.api.ad.BannerAd;
 import com.heytap.msp.mobad.api.ad.InterstitialAd;
 import com.heytap.msp.mobad.api.ad.RewardVideoAd;
-import com.heytap.msp.mobad.api.ad.SplashAd;
 import com.heytap.msp.mobad.api.listener.IBannerAdListener;
 import com.heytap.msp.mobad.api.listener.IInterstitialAdListener;
-import com.heytap.msp.mobad.api.listener.INativeAdvanceLoadListener;
 import com.heytap.msp.mobad.api.listener.IRewardVideoAdListener;
-import com.heytap.msp.mobad.api.listener.ISplashAdListener;
-import com.heytap.msp.mobad.api.params.INativeAdvanceData;
-import com.heytap.msp.mobad.api.params.SplashAdParams;
 import com.nearme.game.sdk.GameCenterSDK;
 import com.nearme.game.sdk.callback.GameExitCallback;
+import com.unity3d.player.R;
 import com.unity3d.player.UnityPlayer;
-
-import java.util.List;
 
 public class oppoSDKAgent {
     private static oppoSDKAgent _mInatance = null;
     private Activity _mActivity = null;
-    private FrameLayout mFrameLayout; //广告展示的layout
+    private RelativeLayout mAdContainer;
+
 
     private  final  int  ADS_TYPE_BANNER = 1; //banner 广告
     private  final  int  ADS_TYPE_INSERT = 2;   //插屏广告
@@ -37,7 +39,7 @@ public class oppoSDKAgent {
     private  final  int  ADS_TYPE_OPEN = 4;    //开屏广告
 
 
-    private SplashAd mSplashAd = null; //开屏广告
+
     private BannerAd mBannerAd = null;     //banner
     private InterstitialAd mInterstitialAd = null; //插屏
     private RewardVideoAd mRewardVideoAd = null;   //视频激励
@@ -56,23 +58,23 @@ public class oppoSDKAgent {
         return _mInatance;
     }
     public void initialized(Activity mActivity){
+        mAdContainer = (RelativeLayout) mActivity.findViewById(R.id.ad_container);
         Log.i("shuifeng", "initialized: ");
         _mActivity = mActivity;
         String appSecret = "25a2b9f742cb46d1b42f5908cd257096";
         GameCenterSDK.init(appSecret, _mActivity);
 
-        InitParams initParams = new InitParams.Builder()
-                .setDebug(false)
-                //true 打开 SDK 日志，当应用发布 Release 版本时，必须注释掉这行代码的调用，或者设为 false
-                .build();
-        /**
-         * 调用这行代码初始化广告 SDK
-         */
-        MobAdManager.getInstance().init(_mActivity, APP_ID, initParams);
 
-        initVideoAds();
-        initBannerAds();
-        initInsertAds();
+        InitParams initParams = new InitParams.Builder()
+                .setDebug(true) //true 打开 SDK 日志，当应用发布 Release 版本时，必须注释掉这行代码的调用，或者设为 false
+                .build();
+/**  * 调用这行代码初始化广告 SDK
+ */
+        MobAdManager.getInstance().init(mActivity, APP_ID, initParams);
+
+//        initVideoAds();
+//        initBannerAds();
+//        initInsertAds();
     }
     public void pay(){
 //        GameCenterSDK.getInstance().doSinglePay(this, payInfo,
@@ -107,42 +109,30 @@ public class oppoSDKAgent {
             /**
              * 在你的应用程序进程退出时，调用该方法释放 SDK 资源
              * */
-            MobAdManager.getInstance().exit(_mActivity);
+//            MobAdManager.getInstance().exit(_mActivity);
 
             Log.i("shuifeng", "exitGame: ");
             _mActivity.finish();
         }
     }
     public void moreGame(){
+        Log.i("shuifeng", "moreGame: 1");
         GameCenterSDK.getInstance().jumpLeisureSubject();
+        Log.i("shuifeng", "moreGame: 2");
+
     }
 
     public void showAds(int _type_) {
             switch (_type_) {
                 case ADS_TYPE_BANNER: {
-                    if (mBannerAd == null ) {
-                        initBannerAds();
-                    }else  {
+//                    mFrameLayout = _mActivity.getWindow().getDecorView().findViewById(android.R.id.content);
 
-                        mFrameLayout = _mActivity.getWindow().getDecorView().findViewById(android.R.id.content);
-                        View adView = mBannerAd.getAdView();
-                        if (null != adView) {
-                            mFrameLayout.addView(adView);
-                        }
-//                        mBannerAd.showAd();
-                        //挂载上去
-                    }
                 }break;
                 case ADS_TYPE_INSERT: {
-                    if (mInterstitialAd == null) {
-                        initInsertAds();
-                    }
                     mInterstitialAd.showAd();
                 }break;
                 case ADS_TYPE_VOID: {
-                    if (mRewardVideoAd == null || mRewardVideoAd.isReady() != true) {
-                        initVideoAds();
-                    }
+
                     mRewardVideoAd.showAd();
 
                 }break;
@@ -153,37 +143,6 @@ public class oppoSDKAgent {
                     Log.e("shuifeng", "showAds: "+ "not support ads type is " + _type_);
                 }
             }
-    }
-
-    void initSplashAd() {
-        if (mSplashAd == null) {
-            try {
-                /**
-                 * SplashAd 初始化参数、这里可以设置获取广告最大超时时间，
-                 * 广告下面半屏的应用标题+应用描述
-                 * 注意：应用标题和应用描述是必传字段，不传将抛出异常
-                 */
-                SplashAdParams splashAdParams = new SplashAdParams.Builder()
-                        .setFetchTimeout(3000)
-                        .setTitle("快乐冲冲冲")
-                        .setDesc("")
-                        .build();
-                /**
-                 * 构造 SplashAd 对象
-                 * 注意：构造函数传入的几个形参都不能为空，否则将抛出 NullPointerException 异常。
-                 */
-                mSplashAd = new SplashAd(_mActivity, OPEN_ADS_ID , new myISplashAdListener(), splashAdParams);
-            } catch (Exception e) {
-                mSplashAd = null;
-                Log.w("shuifneg", "loadSplashAd err is ", e);
-                /**
-                 * 出错，直接 finish(),跳转应用主页面。
-                 */
-//                Intent intent = new Intent(this, MainActivity.class);
-//                startActivity(intent);
-//                finish();
-            }
-        }
     }
 
     void initBannerAds() {
@@ -212,12 +171,10 @@ public class oppoSDKAgent {
     }
 
     void  onAdsReady(int _adstype_) {
-        UnityPlayer.UnitySendMessage("admanager", "onAdsReady", ""+_adstype_);
+        UnityPlayer.UnitySendMessage("Canvas", "onAdsReady", ""+_adstype_);
     }
 
-
-
-    void loadAdsAgain(int _adsType_) {
+    public void loadAdsAgain(int _adsType_) {
         switch (_adsType_) {
             case ADS_TYPE_BANNER : {
                 if (mBannerAd == null) {
@@ -241,71 +198,67 @@ public class oppoSDKAgent {
         }
     }
 
-
-
-    //开屏的监听
-    class myISplashAdListener implements ISplashAdListener {
-
-        @Override
-        public void onAdDismissed() {
-
-        }
-
-        @Override
-        public void onAdShow() {
-
-        }
-
-        @Override
-        public void onAdFailed(String s) {
-
-        }
-
-        @Override
-        public void onAdFailed(int i, String s) {
-
-        }
-
-        @Override
-        public void onAdClick() {
-
-        }
-    }
     //banner 的监听
     class myIBannerAdListener implements IBannerAdListener {
 
         @Override
         public void onAdReady() {
-            Log.i("shuifeng", "onAdReady:  ");
+            Log.i("shuifeng", "Banner onAdReady:  ");
             onAdsReady(ADS_TYPE_BANNER);
+            View adView = mBannerAd.getAdView();
+            //挂载上去
+            if (null != adView) {
+
+                adView.setLayoutParams( new FrameLayout.LayoutParams( ViewGroup.LayoutParams.MATCH_PARENT, 90 ) );
+                FrameLayout mFrameLayout  = (FrameLayout) _mActivity.getWindow().getDecorView().findViewById(android.R.id.content);
+                LinearLayout.LayoutParams tvParams = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT, 1);
+                tvParams.gravity = Gravity.BOTTOM | Gravity.START;
+
+                Display display =  _mActivity.getWindowManager().getDefaultDisplay();
+                Point size = new Point();
+                display.getSize(size);
+                int tempHeight = size.y - 100;
+                Log.e("shuifeng", "onAdReady: tempHeight == "+tempHeight );
+                tvParams.setMargins(0, tempHeight - 500, 0, 0);
+                mFrameLayout.addView(adView, tvParams);
+
+//                RelativeLayout.LayoutParams layoutParams = new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+//                layoutParams.addRule(RelativeLayout.ALIGN_PARENT_TOP);
+//                Display display =  _mActivity.getWindowManager().getDefaultDisplay();
+//                Point size = new Point();
+//                display.getSize(size);
+//                int tempHeight = size.y  - 100;
+//                layoutParams.setMargins(0, tempHeight, 0, 0);
+//                mAdContainer.addView(adView, layoutParams);
+            }
         }
 
         @Override
         public void onAdClose() {
-            Log.i("shuifeng", "onAdClose:  ");
+            Log.i("shuifeng", "Banner onAdClose:  ");
 
         }
 
         @Override
         public void onAdShow() {
-            Log.i("shuifeng", "onAdShow:  ");
+            Log.i("shuifeng", "Banner onAdShow:  ");
 
         }
 
         @Override
         public void onAdFailed(String s) {
-            Log.i("shuifeng", "onAdFailed: " );
+            Log.i("shuifeng", "Banner onAdFailed: " );
         }
 
         @Override
         public void onAdFailed(int code,String err) {
-            Log.i("shuifeng", "onAdShow:  code = "+ code + "err is "+ err );
+            Log.i("shuifeng", "Banner onAdShow:  code =  "+ code + "   err is "+ err );
 
         }
 
         @Override
         public void onAdClick() {
-            Log.i("shuifeng", "onAdClick: ");
+            Log.i("shuifeng", "Banner  onAdClick: ");
         }
     }
     // 插屏的监听
@@ -313,41 +266,41 @@ public class oppoSDKAgent {
 
         @Override
         public void onAdReady() {
+            Log.i("shuifeng", "Interstitial  onAdReady: ");
             onAdsReady(ADS_TYPE_INSERT);
         }
 
         @Override
         public void onAdClose() {
-
+            Log.i("shuifeng", "Interstitial  onAdClose: ");
         }
 
         @Override
         public void onAdShow() {
-
+            Log.i("shuifeng", "Interstitial  onAdShow: ");
         }
 
         @Override
         public void onAdFailed(String s) {
-
+            Log.i("shuifeng", "Interstitial  onAdFailed: " + s);
         }
 
         @Override
-        public void onAdFailed(int i, String s) {
-
+        public void onAdFailed(int code, String err) {
+            Log.i("shuifeng", "Interstitial onAdFailed:  code =  "+ code + "   err is "+ err );
         }
 
         @Override
         public void onAdClick() {
-
+            Log.i("shuifeng", "Interstitial onAdClick ");
         }
     }
     //视屏激励的监听
     class myINativeAdvanceLoadListener implements IRewardVideoAdListener {
 
-
         @Override
         public void onAdSuccess() {
-            Log.e("shuifeng", "onAdSuccess: ");
+            Log.e("shuifeng", "video onAdSuccess: ");
             onAdsReady(ADS_TYPE_VOID);
         }
 
@@ -358,88 +311,176 @@ public class oppoSDKAgent {
 
         @Override
         public void onAdFailed(int code, String retStr) {
-            Log.e("shuifeng", "onAdFailed: code is "+ code + "retstr is " + retStr );
+
+            Log.e("shuifeng", "video onAdFailed: code is "+ code + "retstr is " + retStr );
         }
 
         @Override
         public void onAdClick(long l) {
-
+            Log.e("shuifeng", "video onAdClick:  ");
         }
 
         @Override
         public void onVideoPlayStart() {
-
+            Log.e("shuifeng", "video onVideoPlayStart:  ");
         }
 
         @Override
         public void onVideoPlayComplete() {
-            Log.e("shuifeng", "onVideoPlayComplete: ");
-            UnityPlayer.UnitySendMessage("admanager", "isReworldVideoComplete", "0");
+            Log.e("shuifeng", "video  onVideoPlayComplete: ");
+            //UnityPlayer.UnitySendMessage("Canvas", "isReworldVideoComplete", "0");
             //通知unity 发奖励
         }
 
         @Override
         public void onVideoPlayError(String s) {
-            Log.e("shuifeng", "onVideoPlayError: "+ s);
-            UnityPlayer.UnitySendMessage("admanager", "isReworldVideoComplete", "-1");
+            Log.e("shuifeng", "video onVideoPlayError: "+ s);
+            UnityPlayer.UnitySendMessage("Canvas", "isReworldVideoComplete", "-1");
             //通知unity 不发奖励
         }
 
         @Override
         public void onVideoPlayClose(long l) {
-            Log.e("shuifeng", "onVideoPlayClose: ");
-            UnityPlayer.UnitySendMessage("admanager", "isReworldVideoComplete", "-2");
+            Log.e("shuifeng", "video onVideoPlayClose: ");
+            UnityPlayer.UnitySendMessage("Canvas", "isReworldVideoComplete", "-2");
         }
 
         @Override
         public void onLandingPageOpen() {
-
+            Log.e("shuifeng", "video onLandingPageOpen: ");
         }
 
         @Override
         public void onLandingPageClose() {
-
+            Log.e("shuifeng", "video onLandingPageClose: ");
         }
 
         @Override
         public void onReward(Object... objects) {
             //            奖励发放
-            Log.e("shuifeng", "onReward: ");
-            UnityPlayer.UnitySendMessage("admanager", "isReworldVideoComplete", "0");
+            Log.e("shuifeng", "video onReward: ");
+            UnityPlayer.UnitySendMessage("Canvas", "isReworldVideoComplete", "0");
             //通知unity 发奖励
         }
     }
 
 
 
-
-
-//        oppoSDKAgent.getInstance().initialized(this);
-//        tools.getInstance().initialized(this);
-
-//    if(keyCode == KeyEvent.KEYCODE_BACK && event.getAction() == KeyEvent.ACTION_UP){
-//        oppoSDKAgent.getInstance().gameExitGame();
-//    }
-
-
-//    public  void onClickMoreGameBtn() {
-//        Log.d("shuifeng", "onClickMoreGameBtn: 1");
-//        try {
-//            UnityPlayer.UnitySendMessage("Canvas", "onClickConfirmBtn","");
-//        } catch (Error err) {
-//            Log.e("shuifeng", "onClickMoreGameBtn: "+ err);
-//        }
-//
-//        Log.d("shuifeng", "onClickMoreGameBtn: 2");
-//
-////        tools.getInstance().onClickMoreGame();
-//    }
-//    public void showAds(String _adsType_) {
-//        Log.d("shuifeng", "showAds: " + _adsType_);
-//        int tempIndex = Integer.parseInt(_adsType_);
-//        oppoSDKAgent.getInstance().showAds(tempIndex);
-//    }
-
 }
 
+
+/*
+
+    public  void onClickMoreGameBtn() {
+        oppoSDKAgent.getInstance().moreGame();
+    }
+    public void showAds(String _adsType_) {
+        Log.d("shuifeng", "showAds: " + _adsType_);
+        int tempIndex = Integer.parseInt(_adsType_);
+        //oppoSDKAgent.getInstance().showAds(tempIndex);
+    }
+
+     if(keyCode == KeyEvent.KEYCODE_BACK && event.getAction() == KeyEvent.ACTION_UP){
+        oppoSDKAgent.getInstance().gameExitGame();
+    }
+
+    oppoSDKAgent.getInstance().initialized(this);
+
+    <?xml version="1.0" encoding="utf-8"?>
+<!-- GENERATED BY UNITY. REMOVE THIS COMMENT TO PREVENT OVERWRITING WHEN EXPORTING AGAIN-->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="com.unity3d.player" xmlns:tools="http://schemas.android.com/tools">
+  <application>
+
+    <activity
+        android:name="com.unity3d.player.UnityPlayerActivity"
+        android:theme="@style/UnityThemeSelector"
+        android:screenOrientation="sensorPortrait"
+        android:launchMode="singleTask"
+        android:requestLegacyExternalStorage="true"
+        android:networkSecurityConfig="@xml/network_security_config"
+        android:configChanges="mcc|mnc|locale|touchscreen|keyboard|keyboardHidden|navigation|orientation|screenLayout|uiMode|screenSize|smallestScreenSize|fontScale|layoutDirection|density"
+        android:hardwareAccelerated="false">
+      <!--        android:theme="@style/Theme.notAnimation" -->
+
+    </activity>
+
+    <activity
+        android:name="com.csj.klccc.mySplashActivity"
+        android:screenOrientation="sensorPortrait"
+        android:configChanges="orientation|keyboardHidden|screenSize"
+        android:label="@string/app_name"
+        tools:ignore="DuplicateActivity">
+      <intent-filter>
+        <action android:name="android.intent.action.MAIN" />
+        <category android:name="android.intent.category.LAUNCHER" />
+      </intent-filter>
+      <meta-data android:name="unityplayer.UnityActivity" android:value="true" />
+      <meta-data android:name="android.notch_support" android:value="true" />
+
+    </activity>
+    <meta-data android:name="unity.splash-mode" android:value="0" />
+    <meta-data android:name="unity.splash-enable" android:value="True" />
+    <meta-data android:name="notch.config" android:value="portrait|landscape" />
+    <meta-data android:name="unity.build-id" android:value="964d2ee4-45a2-4000-9c81-7da5bac52ec4" />
+
+
+    <meta-data android:name="debug_mode" android:value="false" /> <!-- 调试开关，发布时候设置false -->
+    <meta-data android:name="is_offline_game" android:value="true" /> <!-- true:单机游戏 false:网游 -->
+    <meta-data android:name="app_key" android:value="202e28aeadb2440eaad32df22caf5822" /> <!--appKey,务必换成 游戏自己的参数 -->
+    <uses-library android:name="org.apache.http.legacy" android:required="false"/> <!--9.0及以上设备可能需要 -->
+
+
+
+    <provider
+        android:name="com.opos.mobad.provider.MobAdGlobalProvider"
+        android:authorities="${applicationId}.MobAdGlobalProvider"
+        android:exported="false" />
+    <provider
+        android:name="com.bytedance.sdk.openadsdk.multipro.TTMultiProvider"
+        android:authorities="${applicationId}.TTMultiProvider"
+        android:exported="false" />
+    <provider
+        android:name="com.bytedance.sdk.openadsdk.TTFileProvider"
+        android:authorities="${applicationId}.TTFileProvider"
+        android:exported="false"
+        android:grantUriPermissions="true">
+      <meta-data android:name="android.support.FILE_PROVIDER_PATHS"
+          android:resource="@xml/file_paths" />
+    </provider>
+    <provider
+        android:name="android.support.v4.content.FileProvider"
+        android:authorities="${applicationId}.fileprovider"
+        android:exported="false"
+        android:grantUriPermissions="true">
+      <meta-data
+          android:name="android.support.FILE_PROVIDER_PATHS"
+          android:resource="@xml/gdt_file_path" />
+    </provider>
+    <provider
+        android:name="com.heytap.msp.mobad.api.MobFileProvider"
+        android:authorities="${applicationId}.MobFileProvider"
+        android:exported="false"
+        android:grantUriPermissions="true">
+      <meta-data
+          android:name="android.support.FILE_PROVIDER_PATHS"
+          android:resource="@xml/mobad_provider_paths" />
+    </provider>
+
+  </application>
+  <uses-feature android:glEsVersion="0x00020000" />
+  <supports-gl-texture android:name="GL_KHR_texture_compression_astc_ldr" />
+  <uses-permission android:name="android.permission.INTERNET" />
+  <uses-feature android:name="android.hardware.touchscreen" android:required="false" />
+  <uses-feature android:name="android.hardware.touchscreen.multitouch" android:required="false" />
+  <uses-feature android:name="android.hardware.touchscreen.multitouch.distinct" android:required="false" />
+
+  <!--SDK 可选权限配置开始；建议应用配置定位权限，可以提升应用的广告收益-->
+  <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" /> <!--如果应用需要精准定位的话加上该权限-->
+  <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" /> <!--Android Q 上如果应用需要精准定位的话加上该权限-->
+  <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" /> <!--SDK 可选权限配置结束-->
+
+</manifest>
+
+
+ */
 
