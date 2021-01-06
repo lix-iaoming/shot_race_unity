@@ -30,7 +30,7 @@ import com.unity3d.player.UnityPlayer;
 public class oppoSDKAgent {
     private static oppoSDKAgent _mInatance = null;
     private Activity _mActivity = null;
-    private RelativeLayout mAdContainer;
+//    private RelativeLayout mAdContainer;
 
 
     private  final  int  ADS_TYPE_BANNER = 1; //banner 广告
@@ -58,7 +58,7 @@ public class oppoSDKAgent {
         return _mInatance;
     }
     public void initialized(Activity mActivity){
-        mAdContainer = (RelativeLayout) mActivity.findViewById(R.id.ad_container);
+//        mAdContainer = (RelativeLayout) mActivity.findViewById(R.id.ad_container);
         Log.i("shuifeng", "initialized: ");
         _mActivity = mActivity;
         String appSecret = "25a2b9f742cb46d1b42f5908cd257096";
@@ -208,23 +208,24 @@ public class oppoSDKAgent {
             View adView = mBannerAd.getAdView();
             //挂载上去
             if (null != adView) {
-
-                adView.setLayoutParams( new FrameLayout.LayoutParams( ViewGroup.LayoutParams.MATCH_PARENT, 90 ) );
-                FrameLayout mFrameLayout  = (FrameLayout) _mActivity.getWindow().getDecorView().findViewById(android.R.id.content);
-                LinearLayout.LayoutParams tvParams = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT, 1);
-                tvParams.gravity = Gravity.BOTTOM | Gravity.START;
-
                 Display display =  _mActivity.getWindowManager().getDefaultDisplay();
                 Point size = new Point();
                 display.getSize(size);
+                FrameLayout mFrameLayout  = (FrameLayout) _mActivity.getWindow().getDecorView().findViewById(android.R.id.content);
+
+                ViewGroup.MarginLayoutParams tvParams = new FrameLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT, 1);
+                //LinearLayout.LayoutParams tvParams = new LinearLayout.LayoutParams(size.x, size.y, 0);
+                //tvParams.gravity = Gravity.BOTTOM;
+
+
                 int tempHeight = size.y - 100;
                 Log.e("shuifeng", "onAdReady: tempHeight == "+tempHeight );
-                tvParams.setMargins(0, tempHeight - 500, 0, 0);
+                tvParams.setMargins(0, tempHeight, 0, 0);
                 mFrameLayout.addView(adView, tvParams);
 
 //                RelativeLayout.LayoutParams layoutParams = new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
 //                layoutParams.addRule(RelativeLayout.ALIGN_PARENT_TOP);
-//                Display display =  _mActivity.getWindowManager().getDefaultDisplay();
+//                Display display =  _mActivity.getWindowManager( ).getDefaultDisplay();
 //                Point size = new Point();
 //                display.getSize(size);
 //                int tempHeight = size.y  - 100;
@@ -478,6 +479,11 @@ public class oppoSDKAgent {
   <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" /> <!--如果应用需要精准定位的话加上该权限-->
   <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" /> <!--Android Q 上如果应用需要精准定位的话加上该权限-->
   <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" /> <!--SDK 可选权限配置结束-->
+
+  <uses-permission android:name="android.permission.READ_PHONE_STATE" />
+  <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+  <uses-permission android:name="android.permission.WRITE_CALENDAR" />
+  <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
 
 </manifest>
 
