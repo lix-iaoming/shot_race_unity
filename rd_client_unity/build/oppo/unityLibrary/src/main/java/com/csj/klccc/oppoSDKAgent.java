@@ -3,6 +3,7 @@ package com.csj.klccc;
 import android.app.Activity;
 import android.content.Context;
 import android.graphics.Point;
+import android.os.Build;
 import android.support.annotation.Dimension;
 import android.util.Log;
 import android.view.Display;
@@ -26,14 +27,20 @@ import com.nearme.game.sdk.GameCenterSDK;
 import com.nearme.game.sdk.callback.GameExitCallback;
 import com.unity3d.player.R;
 import com.unity3d.player.UnityPlayer;
+import com.unity3d.player.UnityPlayerActivity;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 public class oppoSDKAgent {
     private static oppoSDKAgent _mInatance = null;
     private Activity _mActivity = null;
 //    private RelativeLayout mAdContainer;
 
+    private  int adsKay; //这是哪里调起的广告
 
-    private  final  int  ADS_TYPE_BANNER = 1; //banner 广告
+
+   private  final  int  ADS_TYPE_BANNER = 1; //banner 广告
     private  final  int  ADS_TYPE_INSERT = 2;   //插屏广告
     private  final  int  ADS_TYPE_VOID = 3;    //激励视频
     private  final  int  ADS_TYPE_OPEN = 4;    //开屏广告
@@ -98,7 +105,7 @@ public class oppoSDKAgent {
 //});
     }
     public void gameExitGame(){
-
+        Log.d("shuifeng", "sdk gameExitGame：");
         GameCenterSDK.getInstance().onExit(_mActivity,  new myGameExitCallback());
     }
 
@@ -122,7 +129,7 @@ public class oppoSDKAgent {
 
     }
 
-    public void showAds(int _type_) {
+    public void showAds(int _type_, int _adKey_) {
             switch (_type_) {
                 case ADS_TYPE_BANNER: {
 //                    mFrameLayout = _mActivity.getWindow().getDecorView().findViewById(android.R.id.content);
@@ -132,7 +139,7 @@ public class oppoSDKAgent {
                     mInterstitialAd.showAd();
                 }break;
                 case ADS_TYPE_VOID: {
-
+                    adsKay = _adKey_;
                     mRewardVideoAd.showAd();
 
                 }break;
@@ -171,7 +178,38 @@ public class oppoSDKAgent {
     }
 
     void  onAdsReady(int _adstype_) {
-        UnityPlayer.UnitySendMessage("Canvas", "onAdsReady", ""+_adstype_);
+        Thread myThread=new Thread(){//创建子线程
+            @Override
+            public void run() {
+                try{
+                    Log.i("shuifeng", "onAdsReady:  _adstype_ is " + _adstype_);
+                    UnityPlayer.UnitySendMessage("Canvas", "onAdsReady", ""+_adstype_);
+                }catch (Exception e){
+                    e.printStackTrace();
+                }
+            }
+        };
+        myThread.start();//启动线程
+
+
+    }
+
+    void onAdsFinish(int _code_) {
+
+        String tempStr = _code_ + "," + adsKay;
+
+        Thread myThread=new Thread(){//创建子线程
+            @Override
+            public void run() {
+                try{
+                    Log.i("shuifeng", "onAdsReady:  _adstype_ is " + tempStr);
+                    UnityPlayer.UnitySendMessage("Canvas", "isReworldVideoComplete", tempStr);
+                }catch (Exception e){
+                    e.printStackTrace();
+                }
+            }
+        };
+        myThread.start();//启动线程
     }
 
     public void loadAdsAgain(int _adsType_) {
@@ -212,25 +250,34 @@ public class oppoSDKAgent {
                 Point size = new Point();
                 display.getSize(size);
                 FrameLayout mFrameLayout  = (FrameLayout) _mActivity.getWindow().getDecorView().findViewById(android.R.id.content);
+                int tempHeight = size.y;
+
+                //Build.VERSION.SDK;
+                float tempRatio =(float)size.x / size.y;
+                Log.e("shuifeng", "onAdReady: tempRatio == "+ tempRatio );
+                Log.e("shuifeng", "onAdReady: size.x == "+ size.x + "  size.y  == " + size.y );
+                if (tempRatio < 0.5) {
+                    tempHeight = size.y +10;
+                } else {
+                    tempHeight = size.y - 100;
+                }
 
                 ViewGroup.MarginLayoutParams tvParams = new FrameLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT, 1);
-                //LinearLayout.LayoutParams tvParams = new LinearLayout.LayoutParams(size.x, size.y, 0);
-                //tvParams.gravity = Gravity.BOTTOM;
-
-
-                int tempHeight = size.y - 100;
-                Log.e("shuifeng", "onAdReady: tempHeight == "+tempHeight );
                 tvParams.setMargins(0, tempHeight, 0, 0);
                 mFrameLayout.addView(adView, tvParams);
+                Log.e("shuifeng", "onAdReady: phoneSdkVersion == "+ tempHeight + "  size.y  == " + size.y );
+
+
+
+
+                //int tempWidth = size.x /2 - 150;
 
 //                RelativeLayout.LayoutParams layoutParams = new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
 //                layoutParams.addRule(RelativeLayout.ALIGN_PARENT_TOP);
 //                Display display =  _mActivity.getWindowManager( ).getDefaultDisplay();
 //                Point size = new Point();
 //                display.getSize(size);
-//                int tempHeight = size.y  - 100;
-//                layoutParams.setMargins(0, tempHeight, 0, 0);
-//                mAdContainer.addView(adView, layoutParams);
+//
             }
         }
 
@@ -329,21 +376,22 @@ public class oppoSDKAgent {
         @Override
         public void onVideoPlayComplete() {
             Log.e("shuifeng", "video  onVideoPlayComplete: ");
-            //UnityPlayer.UnitySendMessage("Canvas", "isReworldVideoComplete", "0");
+
             //通知unity 发奖励
         }
 
         @Override
         public void onVideoPlayError(String s) {
             Log.e("shuifeng", "video onVideoPlayError: "+ s);
-            UnityPlayer.UnitySendMessage("Canvas", "isReworldVideoComplete", "-1");
+
+            onAdsFinish(-1);
             //通知unity 不发奖励
         }
 
         @Override
         public void onVideoPlayClose(long l) {
             Log.e("shuifeng", "video onVideoPlayClose: ");
-            UnityPlayer.UnitySendMessage("Canvas", "isReworldVideoComplete", "-2");
+            onAdsFinish(-2);
         }
 
         @Override
@@ -360,7 +408,7 @@ public class oppoSDKAgent {
         public void onReward(Object... objects) {
             //            奖励发放
             Log.e("shuifeng", "video onReward: ");
-            UnityPlayer.UnitySendMessage("Canvas", "isReworldVideoComplete", "0");
+            onAdsFinish(0);
             //通知unity 发奖励
         }
     }
@@ -371,15 +419,41 @@ public class oppoSDKAgent {
 
 
 /*
+ implementation 'com.android.support:appcompat-v7:26.0.0'
+    implementation 'com.squareup.wire:wire-runtime:2.2.0'
+    implementation 'pl.droidsonroids.gif:android-gif-drawable:1.2.18'
+
+
 
     public  void onClickMoreGameBtn() {
         oppoSDKAgent.getInstance().moreGame();
     }
-    public void showAds(String _adsType_) {
-        Log.d("shuifeng", "showAds: " + _adsType_);
-        int tempIndex = Integer.parseInt(_adsType_);
-        //oppoSDKAgent.getInstance().showAds(tempIndex);
+
+     public void showAds(String _str_) {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                String[] tempSreArray = _str_.split(",");
+                Log.d("shuifeng", "showAds: " + _str_);
+                int adType = Integer.parseInt(tempSreArray[0]);
+                int adKey = Integer.parseInt(tempSreArray[1]);
+                oppoSDKAgent.getInstance().showAds(adType, adKey);
+
+            }
+        });
     }
+
+    public void loadAgain(String _adsType_) {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                int tempIndex = Integer.parseInt(_adsType_);
+                oppoSDKAgent.getInstance().loadAdsAgain(tempIndex);
+            }
+        });
+    }
+
+}
 
      if(keyCode == KeyEvent.KEYCODE_BACK && event.getAction() == KeyEvent.ACTION_UP){
         oppoSDKAgent.getInstance().gameExitGame();
@@ -390,6 +464,26 @@ public class oppoSDKAgent {
     <?xml version="1.0" encoding="utf-8"?>
 <!-- GENERATED BY UNITY. REMOVE THIS COMMENT TO PREVENT OVERWRITING WHEN EXPORTING AGAIN-->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android" package="com.unity3d.player" xmlns:tools="http://schemas.android.com/tools">
+
+  <supports-gl-texture android:name="GL_KHR_texture_compression_astc_ldr" />
+  <uses-permission android:name="android.permission.INTERNET" />
+  <uses-feature android:name="android.hardware.touchscreen" android:required="false" />
+  <uses-feature android:name="android.hardware.touchscreen.multitouch" android:required="false" />
+  <uses-feature android:name="android.hardware.touchscreen.multitouch.distinct" android:required="false" />
+
+  <!--SDK 可选权限配置开始；建议应用配置定位权限，可以提升应用的广告收益-->
+  <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" /> <!--如果应用需要精准定位的话加上该权限-->
+  <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" /> <!--Android Q 上如果应用需要精准定位的话加上该权限-->
+  <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" /> <!--SDK 可选权限配置结束-->
+
+  <uses-permission android:name="android.permission.READ_PHONE_STATE" />
+  <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+  <uses-permission android:name="android.permission.WRITE_CALENDAR" />
+  <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+
+
+
+
   <application>
 
     <activity
@@ -469,21 +563,7 @@ public class oppoSDKAgent {
 
   </application>
   <uses-feature android:glEsVersion="0x00020000" />
-  <supports-gl-texture android:name="GL_KHR_texture_compression_astc_ldr" />
-  <uses-permission android:name="android.permission.INTERNET" />
-  <uses-feature android:name="android.hardware.touchscreen" android:required="false" />
-  <uses-feature android:name="android.hardware.touchscreen.multitouch" android:required="false" />
-  <uses-feature android:name="android.hardware.touchscreen.multitouch.distinct" android:required="false" />
 
-  <!--SDK 可选权限配置开始；建议应用配置定位权限，可以提升应用的广告收益-->
-  <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" /> <!--如果应用需要精准定位的话加上该权限-->
-  <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" /> <!--Android Q 上如果应用需要精准定位的话加上该权限-->
-  <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" /> <!--SDK 可选权限配置结束-->
-
-  <uses-permission android:name="android.permission.READ_PHONE_STATE" />
-  <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
-  <uses-permission android:name="android.permission.WRITE_CALENDAR" />
-  <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
 
 </manifest>
 

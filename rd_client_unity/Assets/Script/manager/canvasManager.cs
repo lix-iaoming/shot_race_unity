@@ -54,12 +54,13 @@ public class canvasManager : MonoBehaviour
     }
     private void Start()
     {
+   
         levelNo = SceneManager.GetActiveScene().buildIndex;
         if(AudioManager.instance)
         AudioManager.instance.Play("bg");
         levelShowNo = PlayerPrefs.GetInt("levelshow", 1);
         levelText.text = "Level " + levelShowNo;
-        coins = PlayerPrefs.GetInt("coins", 300);
+        coins = PlayerPrefs.GetInt("coins", 0);
         CoinUpdate();
         tipsPanel.SetActive(true);
        checkAndCloseHealthNoticePanel();
@@ -100,6 +101,22 @@ public class canvasManager : MonoBehaviour
         coins += 150;
         CoinUpdate();
     }
+    public void DoubleCoins()
+    {
+        if (getAdsIsReady(global_vars.ADS_TYPE_VOID) == true)
+        {
+            showAds(global_vars.ADS_TYPE_VOID, global_vars.AD_KEY_WIN);
+        }
+        else
+        {
+            noAd.SetActive(true);
+            Invoke("closeAd", 1.0f);
+        }
+       
+
+        
+    }
+
     public void UnlockRandom()
     {
         if(coins>=150)
@@ -148,7 +165,11 @@ public class canvasManager : MonoBehaviour
         pS.PlayControlledParticles(new Vector2(Screen.width / 2, Screen.height / 2), coinReachPos);
         gamepanel.SetActive(false);
         winPanel.SetActive(true);
+        
+
+
     }
+
     public void playButton()
     {
         if (getAdsIsReady(global_vars.ADS_TYPE_BANNER) == true)
@@ -166,7 +187,7 @@ public class canvasManager : MonoBehaviour
     {
         if (getAdsIsReady(global_vars.ADS_TYPE_VOID) == true)
         {
-            showAds(global_vars.ADS_TYPE_VOID);
+            showAds(global_vars.ADS_TYPE_VOID, global_vars.AD_KEY_SHOP);
         }
         else
         {
@@ -287,12 +308,15 @@ public class canvasManager : MonoBehaviour
         Debug.Log("shuifeng: C#  admanger onAdsReady _adsType_ is " + adsReady[tempIndex]);
     }
 
-    public void showAds(int _adsType_)
+    public void showAds(int _adsType_, int adkey = 0 )
     {
         Debug.Log("shuifeng: admanger showAds _adsType_ is " + _adsType_);
         if (adsReady[_adsType_] == true)
         {
-            string tempStr = _adsType_.ToString();
+            string tempAdtype = _adsType_.ToString();
+            string tempadKey = adkey.ToString();
+
+            string tempStr = tempAdtype + "," + tempadKey;
 
             callJaveTools.getInstance().onCallJavaMenthod("showAds", tempStr);
             adsReady[_adsType_] = false;
@@ -322,19 +346,34 @@ public class canvasManager : MonoBehaviour
         return adsReady[_adsType_];
     }
 
-    public void isReworldVideoComplete(string _retcode_)
+    //激励视频广告是否播放完成的回调
+    public void isReworldVideoComplete(string _str_)
     {
-        int tempCode = int.Parse(_retcode_);
-        Debug.Log("shuifeng: C# isReworldVideoComplete  tempCode is " + tempCode);
+
+        string[] tempArray = _str_.Split(',');
+        int tempCode = int.Parse(tempArray[0]);
+        int tempAdKey = int.Parse(tempArray[1]);
+        Debug.Log("shuifeng: C# isReworldVideoComplete  tempCode is " + _str_);
         if (tempCode == 0)
         {
-            coins += 150;
-            Debug.Log("shuifeng: C# isReworldVideoComplete money is " + coins);
+            int tempNum = 150;
+            if (tempAdKey == global_vars.AD_KEY_SHOP)
+            {
+                tempNum = 150;
+                coins += tempNum;
+                CoinUpdate();
+                Debug.Log("shuifeng: C# isReworldVideoComplete money is " + coins);
+            }
+            else if (tempAdKey == global_vars.AD_KEY_WIN) {
+                int tempRatio = global_vars.getInstance().getRatio();
+                tempNum =  tempRatio * global_vars.DEFAULT_COINS_NUM;
+                int tempMoney = PlayerPrefs.GetInt("coins");
+                tempMoney += tempNum;
+                PlayerPrefs.SetInt("coins", tempMoney);
+                NextLevel();
+                Debug.Log("shuifeng: C# isReworldVideoComplete money is " + tempMoney);
+            }
+
         }
-        CoinUpdate();
-
     }
-
-
-
 }

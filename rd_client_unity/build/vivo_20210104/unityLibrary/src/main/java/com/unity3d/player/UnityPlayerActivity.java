@@ -14,7 +14,7 @@ import android.view.Window;
 import android.view.WindowManager;
 import android.os.Process;
 
-import com.csj.klccc.oppoSDKAgent;
+import com.cjs.klccc.vivoSDKAgent;
 
 public class UnityPlayerActivity extends Activity implements IUnityPlayerLifecycleEvents
 {
@@ -44,7 +44,7 @@ public class UnityPlayerActivity extends Activity implements IUnityPlayerLifecyc
         mUnityPlayer = new UnityPlayer(this, this);
         setContentView(mUnityPlayer);
         mUnityPlayer.requestFocus();
-        oppoSDKAgent.getInstance().initialized(this);
+        vivoSDKAgent.getInstance().initialized(this);
     }
 
     // When Unity player unloaded move task to background
@@ -130,17 +130,12 @@ public class UnityPlayerActivity extends Activity implements IUnityPlayerLifecyc
     // Pass any events not handled by (unfocused) views straight to UnityPlayer
     @Override public boolean onKeyUp(int keyCode, KeyEvent event)     {
         if(keyCode == KeyEvent.KEYCODE_BACK && event.getAction() == KeyEvent.ACTION_UP){
-            oppoSDKAgent.getInstance().gameExitGame();
+            vivoSDKAgent.getInstance().gameExitGame();
         }
         return mUnityPlayer.injectEvent(event); }
     @Override public boolean onKeyDown(int keyCode, KeyEvent event)   { return mUnityPlayer.injectEvent(event); }
     @Override public boolean onTouchEvent(MotionEvent event)          { return mUnityPlayer.injectEvent(event); }
     /*API12*/ public boolean onGenericMotionEvent(MotionEvent event)  { return mUnityPlayer.injectEvent(event); }
-
-    public  void onClickMoreGameBtn() {
-        oppoSDKAgent.getInstance().moreGame();
-    }
-
     public void showAds(String _str_) {
         runOnUiThread(new Runnable() {
             @Override
@@ -149,7 +144,7 @@ public class UnityPlayerActivity extends Activity implements IUnityPlayerLifecyc
                 Log.d("shuifeng", "showAds: " + _str_);
                 int adType = Integer.parseInt(tempSreArray[0]);
                 int adKey = Integer.parseInt(tempSreArray[1]);
-                oppoSDKAgent.getInstance().showAds(adType, adKey);
+                vivoSDKAgent.getInstance().showAds(adType, adKey);
 
             }
         });
@@ -160,7 +155,7 @@ public class UnityPlayerActivity extends Activity implements IUnityPlayerLifecyc
             @Override
             public void run() {
                 int tempIndex = Integer.parseInt(_adsType_);
-                oppoSDKAgent.getInstance().loadAdsAgain(tempIndex);
+                vivoSDKAgent.getInstance().loadAgain(tempIndex);
             }
         });
     }

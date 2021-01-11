@@ -4,21 +4,18 @@ import android.Manifest;
 import android.app.Activity;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.graphics.Color;
+
 import android.os.Bundle;
+
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.util.Log;
-import android.view.View;
-import android.view.ViewGroup;
-import android.view.Window;
-import android.widget.Button;
-import android.widget.FrameLayout;
+
 
 import com.heytap.msp.mobad.api.ad.SplashAd;
 import com.heytap.msp.mobad.api.listener.ISplashAdListener;
 import com.heytap.msp.mobad.api.params.SplashAdParams;
-import com.nearme.game.sdk.GameCenterSDK;
+
 import com.unity3d.player.UnityPlayerActivity;
 
 import java.util.ArrayList;
@@ -51,35 +48,16 @@ public class mySplashActivity extends Activity implements ISplashAdListener {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
        oppoSDKAgent.getInstance().initialized(this);
-        String appSecret = "25a2b9f742cb46d1b42f5908cd257096";
-        GameCenterSDK.init(appSecret, this);
+//        String appSecret = "25a2b9f742cb46d1b42f5908cd257096";
+//        GameCenterSDK.init(appSecret, this);
 
 
         checkAndRequestPermissions();
-        checkAndRequestPermissions();
-        //addView();
-        // Get scheme param
-        Log.i("shuifeng", "java init get scheme param");
+//        checkAndRequestPermissions();
+
+        Log.i("shuifeng", "SplashAd java init get scheme param");
     }
 
-    private void addView() {
-        Button button = new Button(mySplashActivity.this);
-        FrameLayout.LayoutParams layoutParams = new FrameLayout.LayoutParams(100, 100);
-        layoutParams.topMargin = 100;
-        button.setText("关闭");
-        button.setBackgroundColor(Color.argb(180, 100,100,100));
-        button.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (mSplashAd != null) {
-                    Log.i("shuifeng", "onClick: clsoe");
-                    endActive();
-                }
-            }
-        });
-        ViewGroup viewGroup = (ViewGroup) getWindow().getDecorView();
-        viewGroup.addView(button, layoutParams);
-    }
 
     protected void initSplashAd() {
         try {
@@ -92,7 +70,7 @@ public class mySplashActivity extends Activity implements ISplashAdListener {
             mSplashAd =  mSplashAd = new SplashAd(this, OPEN_ADS_ID, this, splashAdParams);
 
         } catch (Exception err) {
-            Log.e("shuifeng", "initSplashAd: err  is " + err );
+            Log.e("shuifeng", "SplashAd initSplashAd: err  is " + err );
             mSplashAd = null;
             endActive();
         }
@@ -110,12 +88,12 @@ public class mySplashActivity extends Activity implements ISplashAdListener {
 
     @Override
     public void onAdDismissed() {
-        Log.d("shuifeng", "onADDismissed：");
+        Log.d("shuifeng", "SplashAd onADDismissed：");
         endActive();
     }
     @Override
     public void onAdShow() {
-
+        Log.d("shuifeng", "SplashAd onAdShow：");
     }
     @Override
     public void onAdFailed(String s) {
@@ -123,12 +101,12 @@ public class mySplashActivity extends Activity implements ISplashAdListener {
     }
     @Override
     public void onAdFailed(int i, String s) {
-        Log.d("shuifeng", "onADDismissed：" + i + "  " + s);
+        Log.d("shuifeng", "SplashAd onAdFailed：" + i + "  " + s);
         endActive();
     }
     @Override
     public void onAdClick() {
-
+        Log.d("shuifeng", "SplashAd onAdClick：");
     }
 
 //    //开屏广告
@@ -170,7 +148,7 @@ public class mySplashActivity extends Activity implements ISplashAdListener {
          无法正常获得广告。
          */
         if (PackageManager.PERMISSION_GRANTED !=
-                ActivityCompat.checkSelfPermission(this, Manifest.permission.READ_PHONE_STATE)) {
+                 ActivityCompat.checkSelfPermission(this, Manifest.permission.READ_PHONE_STATE)) {
             mNeedRequestPMSList.add(Manifest.permission.READ_PHONE_STATE);
         }
         if (PackageManager.PERMISSION_GRANTED !=
@@ -203,8 +181,8 @@ public class mySplashActivity extends Activity implements ISplashAdListener {
             String[] temp = new String[mNeedRequestPMSList.size()];
             mNeedRequestPMSList.toArray(temp);
             ActivityCompat.requestPermissions(this, temp, 100);
+        }
     }
-}
     /**
      * 处理权限申请的结果
      *
@@ -225,12 +203,12 @@ public class mySplashActivity extends Activity implements ISplashAdListener {
                      * 应用已经获得 SDK 运行必须的 READ_PHONE_STATE、WRITE_EXTERNAL_STORAGE
                      两个权限，直接请求广告。
                      */
-                    initSplashAd();
+                    //initSplashAd();
                 } else {
                     /**
                      * 如果用户没有授权，那么应该说明意图，引导用户去设置里面授权。
                      */
-                    endActive();
+                    //endActive();
                 }
                 break;
             default:

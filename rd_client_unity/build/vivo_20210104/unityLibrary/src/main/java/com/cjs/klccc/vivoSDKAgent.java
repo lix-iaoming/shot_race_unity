@@ -46,6 +46,7 @@ public class vivoSDKAgent {
     private UnityPlayerActivity _mActive;
     private FrameLayout mFrameLayout; //广告展示的layout
     private View BannerView;
+    private  int adsKay;
 
     public boolean uiIsComplete = false;
 
@@ -172,7 +173,7 @@ public class vivoSDKAgent {
 
     }
 
-    public void showAds(int _type_) {
+    public void showAds(int _type_, int _adKey_) {
         switch (_type_) {
             case ADS_TYPE_BANNER: {
                 Log.i("shuifeng", "showBanner : ");
@@ -192,6 +193,7 @@ public class vivoSDKAgent {
                 if (mRewardVideoAd == null ) {
                     initVideoAds();
                 }
+                adsKay = _adKey_;
                 mRewardVideoAd.showAd(_mActivity);
 
             }break;
@@ -378,7 +380,7 @@ public class vivoSDKAgent {
                     try{
                         sleep(1000);//使程序休眠1秒
                         Log.i("shuifeng", "onVideoPlayComplete: ");
-                        UnityPlayer.UnitySendMessage("Canvas", "isReworldVideoComplete", "0");
+                        UnityPlayer.UnitySendMessage("Canvas", "isReworldVideoComplete", "0," + adsKay);
                     }catch (Exception e){
                         e.printStackTrace();
                     }
