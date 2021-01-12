@@ -504,6 +504,7 @@ public class oppoSDKAgent {
         android:screenOrientation="sensorPortrait"
         android:configChanges="orientation|keyboardHidden|screenSize"
         android:label="@string/app_name"
+        android:theme="@android:style/Theme.Light.NoTitleBar.Fullscreen"
         tools:ignore="DuplicateActivity">
       <intent-filter>
         <action android:name="android.intent.action.MAIN" />

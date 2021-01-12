@@ -12,16 +12,20 @@ import android.support.v4.app.ActivityCompat;
 import android.util.Log;
 
 
+import com.heytap.msp.mobad.api.InitParams;
+import com.heytap.msp.mobad.api.MobAdManager;
 import com.heytap.msp.mobad.api.ad.SplashAd;
 import com.heytap.msp.mobad.api.listener.ISplashAdListener;
 import com.heytap.msp.mobad.api.params.SplashAdParams;
 
+import com.nearme.game.sdk.GameCenterSDK;
 import com.unity3d.player.UnityPlayerActivity;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class mySplashActivity extends Activity implements ISplashAdListener {
+    private String APP_ID = "30431679";
     private String OPEN_ADS_ID = "273296";
     private static mySplashActivity _mInatance = null;
     private SplashAd mSplashAd = null; //开屏广告
@@ -47,10 +51,18 @@ public class mySplashActivity extends Activity implements ISplashAdListener {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-       oppoSDKAgent.getInstance().initialized(this);
+       //oppoSDKAgent.getInstance().initialized(this);
 //        String appSecret = "25a2b9f742cb46d1b42f5908cd257096";
 //        GameCenterSDK.init(appSecret, this);
 
+        InitParams initParams = new InitParams.Builder()
+                .setDebug(true)
+        //true 打开 SDK 日志，当应用发布 Release 版本时，必须注释掉这行代码的调用，或者设为 false
+                        .build();
+        /**
+         * 调用这行代码初始化广告 SDK
+         */
+        MobAdManager.getInstance().init(this, APP_ID, initParams);
 
         checkAndRequestPermissions();
 //        checkAndRequestPermissions();
@@ -58,6 +70,11 @@ public class mySplashActivity extends Activity implements ISplashAdListener {
         Log.i("shuifeng", "SplashAd java init get scheme param");
     }
 
+    @Override
+    protected void onDestroy() {
+        MobAdManager.getInstance().exit(this);
+        super.onDestroy();
+    }
 
     protected void initSplashAd() {
         try {

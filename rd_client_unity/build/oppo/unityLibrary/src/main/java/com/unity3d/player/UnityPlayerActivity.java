@@ -14,12 +14,20 @@ import android.view.Window;
 import android.view.WindowManager;
 import android.os.Process;
 
+import com.csj.klccc.mySplashActivity;
 import com.csj.klccc.oppoSDKAgent;
 
 public class UnityPlayerActivity extends Activity implements IUnityPlayerLifecycleEvents
 {
     protected UnityPlayer mUnityPlayer; // don't change the name of this variable; referenced from native code
+    protected static UnityPlayerActivity mInstance = null; // don't change the name of this variable; referenced from native code
 
+    public  static UnityPlayerActivity getInstance() {
+        if (mInstance == null) {
+            mInstance = new UnityPlayerActivity();
+        }
+        return mInstance;
+    }
     // Override this in your custom UnityPlayerActivity to tweak the command line arguments passed to the Unity Android Player
     // The command line arguments are passed as a string, separated by spaces
     // UnityPlayerActivity calls this from 'onCreate'
@@ -44,6 +52,7 @@ public class UnityPlayerActivity extends Activity implements IUnityPlayerLifecyc
         mUnityPlayer = new UnityPlayer(this, this);
         setContentView(mUnityPlayer);
         mUnityPlayer.requestFocus();
+
         oppoSDKAgent.getInstance().initialized(this);
     }
 
@@ -128,15 +137,13 @@ public class UnityPlayerActivity extends Activity implements IUnityPlayerLifecyc
     }
 
     // Pass any events not handled by (unfocused) views straight to UnityPlayer
-    @Override public boolean onKeyUp(int keyCode, KeyEvent event)     {
-        if(keyCode == KeyEvent.KEYCODE_BACK && event.getAction() == KeyEvent.ACTION_UP){
-            oppoSDKAgent.getInstance().gameExitGame();
-        }
-        return mUnityPlayer.injectEvent(event); }
+    @Override public boolean onKeyUp(int keyCode, KeyEvent event)     { if(keyCode == KeyEvent.KEYCODE_BACK && event.getAction() == KeyEvent.ACTION_UP){
+        oppoSDKAgent.getInstance().gameExitGame();
+    }
+    return mUnityPlayer.injectEvent(event); }
     @Override public boolean onKeyDown(int keyCode, KeyEvent event)   { return mUnityPlayer.injectEvent(event); }
     @Override public boolean onTouchEvent(MotionEvent event)          { return mUnityPlayer.injectEvent(event); }
     /*API12*/ public boolean onGenericMotionEvent(MotionEvent event)  { return mUnityPlayer.injectEvent(event); }
-
     public  void onClickMoreGameBtn() {
         oppoSDKAgent.getInstance().moreGame();
     }
@@ -164,4 +171,5 @@ public class UnityPlayerActivity extends Activity implements IUnityPlayerLifecyc
             }
         });
     }
+
 }
